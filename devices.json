@@ -1,0 +1,22 @@
+[
+    {
+        "location":"same desk",
+        "name":"pink mb",
+        "command":"cp build/bbc-microbit-classic-gcc/source/microbit-samples-combined.hex /Volumes/\"MICROBIT\""
+    },
+    {
+        "location":"front",
+        "name":"lab pi 3 samsung 2",
+        "command":"scp build/bbc-microbit-classic-gcc/source/microbit-samples-combined.hex pi@148.88.227.195:~/hex"
+    },
+    {
+        "location":"right",
+        "name":"home-rasp-pi",
+        "command":"scp build/bbc-microbit-classic-gcc/source/microbit-samples-combined.hex pi@148.88.227.235:~/hex"
+    },
+    {
+        "location":"back",
+        "name":"rasp pi 3 samsung 1",
+        "command":"scp build/bbc-microbit-classic-gcc/source/microbit-samples-combined.hex pi@148.88.227.193:~/hex"
+    }
+]
