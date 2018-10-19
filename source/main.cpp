@@ -36,7 +36,7 @@ struct ReliabilityTestPacket
 };
 
 // #define REPEATER
-#define RELIABILITY_TEST_ID     3
+#define RELIABILITY_TEST_ID     0
 
 NRF51Timer timer0(NRF_TIMER0, TIMER0_IRQn, 4);
 
@@ -197,6 +197,9 @@ int main()
 
         log_string("complete!\r\n");
 
+        // wait for others to complete.
+        wait_ms(10000);
+
         for(int i = 0; i < TEST_DEVICE_COUNT; i++)
         {
             serial.printf("\r\nDevice %d missed: ", i);
@@ -206,9 +209,6 @@ int main()
                     serial.printf("%d, ",j);
             }
         }
-
-        // wait for others to complete.
-        wait_ms(10000);
 
         serial.printf("\r\nThis device thinks it missed: ");
 
