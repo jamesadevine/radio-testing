@@ -25,8 +25,6 @@ DEALINGS IN THE SOFTWARE.
 
 #include "MicroBit.h"
 
-MicroBit uBit;
-
 #define TEST_DEVICE_COUNT       4
 #define TEST_PACKET_COUNT       100
 
@@ -41,6 +39,23 @@ struct ReliabilityTestPacket
 // #define REPEATER
 #define RELIABILITY_TEST_ID     0
 
+NRF51Timer timer0(NRF_TIMER0, TIMER0_IRQn, 4);
+
+MicroBitPeridoRadio radio(timer0, MICROBIT_PERIDO_DEFAULT_APP_ID, RELIABILITY_TEST_ID);
+
+MicroBitSerial serial(USBTX, USBRX);
+
+MicroBitPin P0(MICROBIT_ID_IO_P0, MICROBIT_PIN_P0, PIN_CAPABILITY_ALL);
+MicroBitPin P1(MICROBIT_ID_IO_P1, MICROBIT_PIN_P1, PIN_CAPABILITY_ALL);
+MicroBitPin P2(MICROBIT_ID_IO_P2, MICROBIT_PIN_P2, PIN_CAPABILITY_ALL);
+MicroBitPin P8(MICROBIT_ID_IO_P8, MICROBIT_PIN_P8, PIN_CAPABILITY_ALL);
+MicroBitPin P12(MICROBIT_ID_IO_P12, MICROBIT_PIN_P12, PIN_CAPABILITY_ALL);
+MicroBitPin P13(MICROBIT_ID_IO_P13, MICROBIT_PIN_P13, PIN_CAPABILITY_ALL);
+MicroBitPin P14(MICROBIT_ID_IO_P14, MICROBIT_PIN_P14, PIN_CAPABILITY_ALL);
+MicroBitPin P15(MICROBIT_ID_IO_P15, MICROBIT_PIN_P15, PIN_CAPABILITY_ALL);
+
+MicroBitButton buttonA(MICROBIT_PIN_BUTTON_A, MICROBIT_ID_BUTTON_A);
+
 uint8_t reliabilityResults[TEST_DEVICE_COUNT][TEST_PACKET_COUNT] = { 0 };
 uint8_t previous_seq[TEST_DEVICE_COUNT] = { 0 };
 
@@ -51,7 +66,7 @@ extern uint32_t radio_status;
 
 void log_num(int num)
 {
-    uBit.serial.printf("%d",num);
+    serial.printf("%d",num);
 }
 
 int p0_state = 0;
@@ -82,57 +97,56 @@ void increment_counter(int)
 
 void log_string(const char * s)
 {
-    uBit.serial.printf("%s\r\n",s);
+    serial.printf("%s\r\n",s);
 }
 void set_gpio0(int val)
 {
-    uBit.io.P0.setDigitalValue(val);
+    P0.setDigitalValue(val);
 }
 
 void set_gpio1(int val)
 {
-    uBit.io.P1.setDigitalValue(val);
+    P1.setDigitalValue(val);
 }
 
 void set_gpio2(int val)
 {
-    uBit.io.P2.setDigitalValue(val);
+    P2.setDigitalValue(val);
 }
 
 void set_gpio3(int val)
 {
-    uBit.io.P8.setDigitalValue(val);
+    P8.setDigitalValue(val);
 }
 
 void set_gpio4(int val)
 {
-    uBit.io.P12.setDigitalValue(val);
+    P12.setDigitalValue(val);
 }
 
 void set_gpio5(int val)
 {
-    uBit.io.P13.setDigitalValue(val);
+    P13.setDigitalValue(val);
 }
 
 void set_gpio6(int val)
 {
-    uBit.io.P14.setDigitalValue(val);
+    P14.setDigitalValue(val);
 }
 
 void set_gpio7(int val)
 {
-    uBit.io.P15.setDigitalValue(val);
+    P15.setDigitalValue(val);
 }
 
 ReliabilityTestPacket t;
 
 int main()
 {
-    uBit.init();
-    uBit.radio.enable();
+    radio.enable();
     t.device_id = RELIABILITY_TEST_ID;
 
-    uBit.serial.printf("\r\nDevice id: %d ", t.device_id);
+    serial.printf("\r\nDevice id: %d ", t.device_id);
 
     set_gpio0(0);
     set_gpio1(0);
@@ -154,7 +168,7 @@ int main()
         log_string(" waiting to start...");
         while (1)
         {
-            if (uBit.buttonA.isPressed() || start)
+            if (buttonA.isPressed() || start)
                 break;
         }
 
@@ -162,7 +176,7 @@ int main()
         {
             log_string("Send start!");
             t.start = 1;
-            uBit.radio.send((uint8_t*)&t, sizeof(ReliabilityTestPacket));
+            radio.send((uint8_t*)&t, sizeof(ReliabilityTestPacket));
             t.start = 0;
             while(!start);
             // wait_ms(100);
@@ -173,13 +187,13 @@ int main()
 
         while (t.seq < TEST_PACKET_COUNT)
         {
-            int ret = uBit.radio.send((uint8_t*)&t, sizeof(ReliabilityTestPacket));
+            int ret = radio.send((uint8_t*)&t, sizeof(ReliabilityTestPacket));
 
             if (ret == MICROBIT_OK)
                 t.seq++;
 
             wait_ms(200);
-            uBit.serial.printf("RS: %d, HWDS: %d ", radio_status, NRF_RADIO->STATE);
+            serial.printf("RS: %d, HWDS: %d ", radio_status, NRF_RADIO->STATE);
         }
 
         log_string("complete!\r\n");
@@ -189,29 +203,29 @@ int main()
 
         for(int i = 0; i < TEST_DEVICE_COUNT; i++)
         {
-            uBit.serial.printf("\r\nDevice %d missed: ", i);
+            serial.printf("\r\nDevice %d missed: ", i);
             for (int j = 0; j < TEST_PACKET_COUNT; j++)
             {
                 if (reliabilityResults[i][j] == 0)
-                    uBit.serial.printf("%d, ",j);
+                    serial.printf("%d, ",j);
             }
         }
 
-        uBit.serial.printf("\r\nThis device thinks it missed: ");
+        serial.printf("\r\nThis device thinks it missed: ");
 
         for (int j = 0; j < TEST_PACKET_COUNT; j++)
         {
             if (packet_missed_log[j] == 1)
-                uBit.serial.printf("%d, ",j);
+                serial.printf("%d, ",j);
         }
 
-        uBit.serial.printf("\r\nCRC fails: %d", crc_fail_count);
+        serial.printf("\r\nCRC fails: %d", crc_fail_count);
 
     }
 
 #endif
 
-    uBit.serial.printf("REPEATER");
+    serial.printf("REPEATER");
     while(1);
 }
 
